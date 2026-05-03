@@ -105,29 +105,56 @@ Both return `{ token, user }`.
 ## Sample curl flow
 
 ```bash
-# 1. Sign up
-curl -X POST http://localhost:3000/api/auth/signup \
-  -H 'Content-Type: application/json' \
-  -d '{"email":"alice@example.com","password":"password123","name":"Alice"}'
+# ---- Signup ----
+$response = Invoke-RestMethod -Method POST http://localhost:3000/api/auth/signup `
+-Headers @{ "Content-Type" = "application/json" } `
+-Body '{"email":"awab@example.com","password":"password123","name":"Awab"}'
 
-# (copy the token from the response)
-TOKEN=...
+$response
+$env:TOKEN = $response.token
 
-# 2. Create a company
-curl -X POST http://localhost:3000/api/companies \
-  -H "Authorization: Bearer $TOKEN" \
-  -H 'Content-Type: application/json' \
-  -d '{"name":"Acme Inc"}'
+# ---- Create Company ----
+Invoke-RestMethod -Method POST http://localhost:3000/api/companies `
+-Headers @{ 
+    "Authorization" = "Bearer $env:TOKEN"
+    "Content-Type"  = "application/json"
+} `
+-Body '{"name":"Awab Inc"}'
 
-# 3. Add a transaction (assume company id 1)
-curl -X POST http://localhost:3000/api/companies/1/transactions \
-  -H "Authorization: Bearer $TOKEN" \
-  -H 'Content-Type: application/json' \
-  -d '{"type":"revenue","amount":1500,"occurred_on":"2026-05-01","description":"First sale"}'
+# ---- Revenue ----
+Invoke-RestMethod -Method POST http://localhost:3000/api/companies/1/transactions `
+-Headers @{ 
+    "Authorization" = "Bearer $env:TOKEN"
+    "Content-Type"  = "application/json"
+} `
+-Body '{"type":"revenue","amount":1500,"occurred_on":"2026-05-01"}'
 
-# 4. Dashboard
-curl http://localhost:3000/api/companies/1/dashboard \
-  -H "Authorization: Bearer $TOKEN"
+# ---- Expense ----
+Invoke-RestMethod -Method POST http://localhost:3000/api/companies/1/transactions `
+-Headers @{ 
+    "Authorization" = "Bearer $env:TOKEN"
+    "Content-Type"  = "application/json"
+} `
+-Body '{"type":"expense","amount":400,"occurred_on":"2026-05-01"}'
+
+# ---- Dashboard ----
+Invoke-RestMethod http://localhost:3000/api/companies/1/dashboard `
+-Headers @{ "Authorization" = "Bearer $env:TOKEN" }
+
+# =========================
+# NEGATIVE TEST (Bob)
+# =========================
+
+# ---- Signup (Bob) ----
+$bob = Invoke-RestMethod -Method POST http://localhost:3000/api/auth/signup `
+-Headers @{ "Content-Type" = "application/json" } `
+-Body '{"email":"bob@example.com","password":"password123","name":"Bob"}'
+
+$env:BOB_TOKEN = $bob.token
+
+# ---- Attempt Unauthorized Access ----
+Invoke-RestMethod http://localhost:3000/api/companies/1/dashboard `
+-Headers @{ "Authorization" = "Bearer $env:BOB_TOKEN" }
 ```
 
 ## Key Design Decisions
