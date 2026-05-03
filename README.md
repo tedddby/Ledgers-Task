@@ -48,7 +48,7 @@ Copy `.env.example` to `.env` and fill in your values:
 ```
 PORT=3000
 
-JWT_SECRET=change-me-to-a-long-random-string
+JWT_SECRET=your_secret
 JWT_EXPIRES_IN=7d
 
 DB_HOST=127.0.0.1
